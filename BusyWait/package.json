@@ -1,0 +1,12 @@
+{
+  "name": "sdu-ra-busywait",
+  "version": "1.0.0",
+  "description": "Small resource intensive process for load simulation",
+  "main": "busywait.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "guwan21@student.sdu.dk",
+  "license": "MIT"
+}
