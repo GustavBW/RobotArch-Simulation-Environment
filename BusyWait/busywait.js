@@ -1,8 +1,8 @@
 import { readFileSync } from 'fs';
-import { append, appendAndExit } from "./src/logging.js";
+import { log, logAndExit } from "./src/logging.js";
 
-append("Process Started");
-append("args: " + process.argv);
+log("Process Started");
+log("args: " + process.argv);
 
 const argsContainingConfig = [];
 process.argv.forEach(function (val, index, array) {
@@ -24,22 +24,26 @@ for(let i = 0; i < argsContainingConfig.length; i++){
     }
 }
 if(inputFileName === undefined){
-    appendAndExit("No input file name provided, exiting");
+    logAndExit("No input file name provided, exiting");
 }
 if(outputFileName === undefined){
-    appendAndExit("No output file name provided, exiting");
+    logAndExit("No output file name provided, exiting");
 }
 
 const input = undefined
 try{
     input = readFileSync("../"+inputFileName+".csv", 'utf8');
 }catch(e){
-    appendAndExit("Failed to read input file, exiting");
+    logAndExit("Failed to read input file, exiting");
 }
 const values = input.split(",");
 const duration = values[0];
 if(!Number.isInteger(duration)){
-    appendAndExit("Duration is not an integer, exiting");
+    logAndExit("Duration is not an integer, exiting");
+}
+const memoryMB = values[1];
+if(!Number.isInteger(memoryMB)){
+    logAndExit("MemoryMB is not an integer, exiting");
 }
 
 console.log("Not Implimented");

@@ -10,13 +10,13 @@ const dumpBufferAsFile = () => {
     fs.writeFileSync(logFileName, logFileBuffer.join("\n"));
 }
 
-export function appendAndExit (message) {
+export function logAndExit (message) {
     console.log(message);
     logFileBuffer.push(message);
     dumpBufferAsFile();
     process.exit();
 }
 
-export function append (message) {
+export function log (message) {
     logFileBuffer.push(Date.now() + ": " + message);
 }

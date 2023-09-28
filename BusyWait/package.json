@@ -5,7 +5,8 @@
   "main": "busywait.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node busywait.js"
   },
   "author": "guwan21@student.sdu.dk",
   "license": "MIT"

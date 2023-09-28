@@ -1,5 +1,7 @@
 package dtos
 
+import "time"
+
 type ServerAction struct {
 	Method string `json:"method"`
 	Url    string `json:"url"`
@@ -25,4 +27,10 @@ type ServerMetadata struct {
 	Actions       []ServerAction      `json:"actions"`
 	Specification ServerSpecification `json:"specification"`
 	Utilization   SystemUtilization   `json:"utilization"`
+}
+
+type ProcessResults struct {
+	ComputeMS int64     `json:"computeMs"`
+	Start     time.Time `json:"start"`
+	Result    string    `json:"result"`
 }
