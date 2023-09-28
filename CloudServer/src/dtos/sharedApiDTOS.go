@@ -14,6 +14,7 @@ type ServerSpecification struct {
 	Memory  int32   `json:"memory"`
 	Cpus    float32 `json:"cpus"`
 	Storage int32   `json:"storage"`
+	Latency int32   `json:"latency"`
 }
 
 type SystemUtilization struct {
@@ -23,7 +24,7 @@ type SystemUtilization struct {
 }
 
 type ServerMetadata struct {
-	Id            string              `json:"id"`
+	Id            int64               `json:"id"`
 	Actions       []ServerAction      `json:"actions"`
 	Specification ServerSpecification `json:"specification"`
 	Utilization   SystemUtilization   `json:"utilization"`
