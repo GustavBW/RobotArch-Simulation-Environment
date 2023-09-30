@@ -3,10 +3,7 @@ package gbw.sdu.ra.EnvironmentProvider.services.host;
 import gbw.sdu.ra.EnvironmentProvider.ValErr;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -29,8 +26,22 @@ public class ShellService {
                     .forEach(consumer);
         }
     }
-
     private final ExecutorService globalSequentialExecutor = Executors.newSingleThreadExecutor();
+
+    private Process dockerShell;
+
+    /**
+     * Called by the HostAccessService
+     * @return any fatal error. The program should exit
+     */
+    Exception init(){
+        //Create log dir
+        boolean createLogDir = new File("./shellLogs").mkdir();
+        if(!createLogDir){
+            return new Exception("Unable to create shell logging directory");
+        }
+        return null;
+    }
 
     /**
      *
@@ -50,5 +61,9 @@ public class ShellService {
         globalSequentialExecutor.submit(streamGobbler);
         return ValErr.encapsulate(() -> process.waitFor());
     }
+
+
+
+    private static final String[] EMPTY = new String[0];
 
 }

@@ -1,6 +1,7 @@
 package gbw.sdu.ra.EnvironmentProvider.services.host;
 
 import gbw.sdu.ra.EnvironmentProvider.ValErr;
+import gbw.sdu.ra.EnvironmentProvider.services.docker.DockerfileBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -9,16 +10,18 @@ import java.net.Inet4Address;
 import java.net.ServerSocket;
 
 @Service
-public class HostInformationService {
+public class HostAccessService {
+
 
     public static String OS = System.getProperty("os.name").toLowerCase();
     public static boolean IS_WINDOWS = OS.startsWith("windows");
-    public static boolean IS_UNIX = OS.startsWith("unix");
+    public static boolean IS_LINUX = OS.startsWith("linux");
+    public static final boolean IS_MACOS = OS.startsWith("macos");
 
     private final ShellService shell;
 
     @Autowired
-    public HostInformationService(ShellService shell){
+    public HostAccessService(ShellService shell){
         this.shell = shell;
     }
 
@@ -28,7 +31,9 @@ public class HostInformationService {
         if(getIpv4.hasError()) return getIpv4.err();
         ValErr<String,Exception> getWD = getApplicationWD();
         if(getWD.hasError()) return getWD.err();
-        return null;
+        Exception fileBuilderInit = DockerfileBuilder.init();
+        if(fileBuilderInit != null) return fileBuilderInit;
+        return shell.init();
     }
 
     public ValErr<Integer,Exception> getAvailablePort(){
@@ -61,8 +66,8 @@ public class HostInformationService {
     private final String[] getLatestProcessExitCode = new String[]{"$?"};
 
     public boolean isDockerRunning(){
-        ValErr<Integer,Exception> tryExec = shell.execSeqSync(silentDockerInfoCMD);
-        ValErr<Integer,Exception> getExitCode = shell.execSeqSync(getLatestProcessExitCode);
+        //TODO: Make this silent
+        ValErr<Integer,Exception> getExitCode = shell.execSeqSync(new String[]{"docker","info"});
         if(getExitCode.val() != null){
             return getExitCode.val() == 0;
         }

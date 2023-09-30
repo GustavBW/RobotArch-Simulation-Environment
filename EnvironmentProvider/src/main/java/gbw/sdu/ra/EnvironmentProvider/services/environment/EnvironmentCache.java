@@ -1,5 +1,6 @@
 package gbw.sdu.ra.EnvironmentProvider.services.environment;
 
+import gbw.sdu.ra.EnvironmentProvider.ValErr;
 import gbw.sdu.ra.EnvironmentProvider.controllers.EnvironmentController;
 import gbw.sdu.ra.EnvironmentProvider.dtos.ServerMetadata;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,13 +18,8 @@ public class EnvironmentCache {
     private final List<EnvironmentEntry> cloudEntries = new ArrayList<>();
 
 
-    public ServerMetadata register(String absoluteMetadataUrl){
-
-
-        cloudEntries.add(
-            null    //not null obviously, but we're getting there eventually.
-        );
-        return null;
+    public ValErr<ServerMetadata,Exception> register(ServerMetadata metadata){
+        return ValErr.error(new Exception("Not implemented!"));
     }
 
 

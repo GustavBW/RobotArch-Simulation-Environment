@@ -1,4 +1,6 @@
 package gbw.sdu.ra.EnvironmentProvider.dtos;
 
-public record ServerMetadata(long id, ServerAction[] actions, ServerSpecification specification, ServerUtilization utilization) {
+import java.util.Map;
+
+public record ServerMetadata(long id, Map<String,ServerAction> actions, ServerSpecification specification, ServerUtilization utilization) {
 }

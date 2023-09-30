@@ -10,6 +10,7 @@ import java.util.Map;
 //The simple version
 public class REBuilder<T> {
 
+    public static final String DDH = "SDU-RA-Debug-Header";
     private T body;
     private final MultiValueMap<String,String> headers = new HttpHeaders();
     private HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;

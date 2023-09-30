@@ -1,6 +1,7 @@
 package gbw.sdu.ra.EnvironmentProvider;
 
-import gbw.sdu.ra.EnvironmentProvider.services.host.HostInformationService;
+import gbw.sdu.ra.EnvironmentProvider.services.docker.DockerfileBuilder;
+import gbw.sdu.ra.EnvironmentProvider.services.host.HostAccessService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
@@ -11,15 +12,14 @@ public class EnvironmentProviderApplication {
 	private static ApplicationContext context;
 
 	public static void main(String[] args) throws Exception {
-		//Rescan image directory
-
-		System.out.println("EnvironmentProvider started with images: <arrToString>");
-
+		System.out.println("EnvironmentProvider started with images:" + DockerfileBuilder.getReferenceFiles());
 		context = SpringApplication.run(EnvironmentProviderApplication.class, args);
-		HostInformationService hostService = context.getBean(HostInformationService.class);
+		HostAccessService hostService = context.getBean(HostAccessService.class);
 		Exception hostFailure = hostService.verifyHost();
 		if(hostFailure != null){
 			throw hostFailure;
+		}else{
+			System.out.println("EnvironmentProvider host verified and good to Go.");
 		}
 	}
 
