@@ -17,6 +17,7 @@ var PROCESS_RUN_CMD string = "none"
 var PROCESS_NAME string = "none"
 var DEFAULT_DEBUG_HEADER string = "SDU_RA_Debug_Header"
 var CONTAINER_EXTERNAL_PORT int16 = -1
+var LISTENING_PORT int16 = 4242
 var CONTAINER_HOST_IP string = "unknown"
 var API_VERSION string = "v-1"
 
@@ -29,7 +30,11 @@ var SPECIFICATION dtos.ServerSpecification
 // RA_CPUS,
 // RA_MEMORY,
 // RA_STATIC_LATENCY,
-// RA_STORAGE.
+// RA_STORAGE,
+// RA_CONTAINER_EXTERNAL_PORT,
+// RA_CONTAINER_HOST_IP,
+// API_VERSION,
+// RA_INTERNAL_SERVER_PORT,
 // RA_PROCESS_RUN_CMD_ROOT &
 // RA_PROCESS_NAME
 func LoadEnvironmentAttributes() {
@@ -104,6 +109,17 @@ func LoadEnvironmentAttributes() {
 		fmt.Println("API_VERSION environment variable not set, defaulting to v-1")
 	} else {
 		API_VERSION = apiVersion
+	}
+	var listeningPort = os.Getenv("RA_INTERNAL_SERVER_PORT")
+	if listeningPort == "" {
+		fmt.Println("RA_INTERNAL_SERVER_PORT environment variable not set, defaulting to 8080")
+	} else {
+		var listeningPortAsInt, parseIntErrListeningPort = strconv.ParseInt(listeningPort, 10, 16)
+		if parseIntErrListeningPort != nil {
+			fmt.Println("RA_INTERNAL_SERVER_PORT environment variable not valid: + " + listeningPort + ", defaulting to 8080")
+		} else {
+			LISTENING_PORT = int16(listeningPortAsInt)
+		}
 	}
 
 	SPECIFICATION = dtos.ServerSpecification{

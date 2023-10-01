@@ -21,7 +21,6 @@ public record ValErr<T,R>(T val, R err) {
         K run(N var1, L var2) throws M;
     }
 
-
     public static <T, R> ValErr<T, R> value(T value) {
         return new ValErr<>(value, null);
     }

@@ -1,19 +1,17 @@
 package gbw.sdu.ra.EnvironmentProvider.services.environment;
 
 import gbw.sdu.ra.EnvironmentProvider.ValErr;
-import gbw.sdu.ra.EnvironmentProvider.controllers.EnvironmentController;
 import gbw.sdu.ra.EnvironmentProvider.dtos.ServerMetadata;
-import org.springframework.beans.factory.annotation.Autowired;
+import gbw.sdu.ra.EnvironmentProvider.dtos.ServerSpecification;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 //Holds minimal data on environment services
 //Aka their /metadata routes
 @Service
-public class EnvironmentCache {
+public class EnvironmentRegistry {
 
     private final List<EnvironmentEntry> cloudEntries = new ArrayList<>();
 
@@ -44,5 +42,15 @@ public class EnvironmentCache {
     }
     public List<EnvironmentEntry> entries(){
         return cloudEntries;
+    }
+
+    public long getNextId() {
+        return getCloudSize() + 1;
+    }
+
+    public EnvironmentEntry addDeployed(long id, String metadataUrl, ServerSpecification specification) {
+        EnvironmentEntry entry = new EnvironmentEntry(id, metadataUrl, specification);
+        cloudEntries.add(entry);
+        return entry;
     }
 }

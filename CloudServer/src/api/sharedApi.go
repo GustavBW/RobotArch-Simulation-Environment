@@ -29,17 +29,32 @@ func Append(app *fiber.App) {
 	//According to Fiber, it uses a go-routing (virtual thread) per request, so this should be safe
 	app.Get("/api/"+version+"/metadata", func(c *fiber.Ctx) error {
 		ApplyStaticLatency()
+
+		c.Context().SetStatusCode(200)
+		var cpu, cpuReadErr = systemDiagnostics.GetSystemCPUUsage()
+		var mem, memReadErr = systemDiagnostics.GetSystemRAMUsage()
+		if cpuReadErr != nil {
+			cpu = -1
+			c.Response().Header.Set(config.DEFAULT_DEBUG_HEADER, "CPU read error: "+cpuReadErr.Error())
+			c.Context().SetStatusCode(206)
+		}
+		if memReadErr != nil {
+			mem = -1
+			c.Response().Header.Set(config.DEFAULT_DEBUG_HEADER, "Memory read error: "+memReadErr.Error())
+			c.Context().SetStatusCode(206)
+		}
+
 		var resultStruct = dtos.ServerMetadata{
 			Id:            config.ENVIRONMENT_ID,
 			Actions:       actions,
 			Specification: config.SPECIFICATION,
 			Utilization: dtos.SystemUtilization{
-				Cpu:  systemDiagnostics.GetSystemCPUUsage(),
-				Mem:  systemDiagnostics.GetSystemRAMUsage(),
-				Disk: systemDiagnostics.GetDiskUsage(),
+				Cpu:  cpu,
+				Mem:  mem,
+				Disk: -1,
 			},
 		}
-		c.Context().SetStatusCode(200)
+
 		return c.JSON(&resultStruct)
 	})
 

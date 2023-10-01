@@ -3,7 +3,7 @@ package main
 import (
 	sharedApi "CloudServer/src/api"
 	"CloudServer/src/config"
-	os "os"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -17,12 +17,7 @@ func main() {
 
 	sharedApi.Append(app)
 
-	var port = os.Getenv("RA_CONTAINER_INTERNAL_PORT")
-	if port == "" {
-		panic("RA_CONTAINER_INTERNAL_PORT environment variable not set")
-	}
-
-	var launchErr = app.Listen(":" + port)
+	var launchErr = app.Listen(":" + fmt.Sprint(config.LISTENING_PORT))
 	if launchErr != nil {
 		panic(launchErr)
 	}

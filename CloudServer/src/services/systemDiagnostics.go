@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func GetDiskUsage(path string) (int64, error) {
+func GetDiskUsage(path string) (float32, error) {
 	var totalUsage int64
 
 	err := filepath.Walk(path, func(filePath string, fileInfo os.FileInfo, err error) error {

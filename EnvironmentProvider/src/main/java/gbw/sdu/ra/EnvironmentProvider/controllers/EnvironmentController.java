@@ -6,7 +6,7 @@ import gbw.sdu.ra.EnvironmentProvider.dtos.ServerMetadata;
 import gbw.sdu.ra.EnvironmentProvider.dtos.ServerSpecification;
 import gbw.sdu.ra.EnvironmentProvider.services.docker.DockerServerDeployer;
 import gbw.sdu.ra.EnvironmentProvider.services.docker.DockerfileBuilder;
-import gbw.sdu.ra.EnvironmentProvider.services.environment.EnvironmentCache;
+import gbw.sdu.ra.EnvironmentProvider.services.environment.EnvironmentRegistry;
 import gbw.sdu.ra.EnvironmentProvider.services.environment.EnvironmentEntry;
 import gbw.sdu.ra.EnvironmentProvider.services.environment.MetadataAggregator;
 import gbw.sdu.ra.EnvironmentProvider.services.functional.Verifier;
@@ -15,8 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestClientException;
-import reactor.core.publisher.Mono;
 
 import java.io.File;
 import java.util.*;
@@ -25,7 +23,7 @@ import java.util.*;
 @RequestMapping(path = "api/v1/",produces = "application/json")
 public class EnvironmentController {
 
-    private final EnvironmentCache environment;
+    private final EnvironmentRegistry environment;
     private final MetadataAggregator aggregator;
     private final HostAccessService hostService;
     private final Verifier<ServerSpecification> specVerifier;
@@ -33,7 +31,7 @@ public class EnvironmentController {
     private final DockerServerDeployer deployer;
 
     @Autowired
-    public EnvironmentController(Verifier<ServerMetadata> metadataVerifier, DockerServerDeployer deployer, Verifier<ServerSpecification> specVerifier, EnvironmentCache environment, MetadataAggregator gatherer, HostAccessService hostService){
+    public EnvironmentController(Verifier<ServerMetadata> metadataVerifier, DockerServerDeployer deployer, Verifier<ServerSpecification> specVerifier, EnvironmentRegistry environment, MetadataAggregator gatherer, HostAccessService hostService){
         this.environment = environment;
         this.aggregator = gatherer;
         this.hostService = hostService;
