@@ -1,34 +1,23 @@
 package gbw.sdu.ra.EnvironmentProvider.services.host;
 
 import gbw.sdu.ra.EnvironmentProvider.ValErr;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.function.Consumer;
+import java.util.concurrent.*;
 
 @Service
 public class ShellService {
-    private static class StreamGobbler implements Runnable {
-        //thx: https://www.baeldung.com/run-shell-command-in-java
-        private InputStream inputStream;
-        private Consumer<String> consumer;
+    private final ExecutorService globalSequentialExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
-        public StreamGobbler(InputStream inputStream, Consumer<String> consumer) {
-            this.inputStream = inputStream;
-            this.consumer = consumer;
-        }
+    private final ForkJoinPool pool = new ForkJoinPool(2);
+    private LogWriter logger;
 
-        @Override
-        public void run() {
-            new BufferedReader(new InputStreamReader(inputStream)).lines()
-                    .forEach(consumer);
-        }
+    @Autowired
+    public ShellService(LogWriter logger){
+        this.logger = logger;
     }
-    private final ExecutorService globalSequentialExecutor = Executors.newSingleThreadExecutor();
-
-    private Process dockerShell;
 
     /**
      * Called by the HostAccessService
@@ -36,8 +25,9 @@ public class ShellService {
      */
     Exception init(){
         //Create log dir
-        boolean createLogDir = new File("./shellLogs").mkdir();
-        if(!createLogDir){
+        File loggingDir = new File("./shellLogs");
+        boolean createLogDir = loggingDir.mkdir();
+        if(!(loggingDir.exists() || createLogDir)){
             return new Exception("Unable to create shell logging directory");
         }
         return null;
@@ -49,17 +39,21 @@ public class ShellService {
      * @return Either an error as soon as possible, or the exit code of the process
      */
     public ValErr<Integer,Exception> execSeqSync(String[] cmd){
-        final Process process;
-        try{
-            process = Runtime.getRuntime().exec(cmd);
-        }catch (IOException e){
-            return ValErr.error(e);
-        }
+        return execSeqSync(cmd, ProcessOutputHandler.NOOP);
+    }
+    public ValErr<Integer,Exception> execSeqSync(String[] cmd, ProcessOutputHandler gobbler){
+        ProcessBuilder processBuilder = new ProcessBuilder(cmd);
+        processBuilder.redirectErrorStream(true);
+        ValErr<Process,Exception> run = ValErr.encapsulate(processBuilder::start);
+        if(run.hasError()) return ValErr.error(run.err());
 
-        StreamGobbler streamGobbler =
-                new StreamGobbler(process.getInputStream(), System.out::println);
-        globalSequentialExecutor.submit(streamGobbler);
-        return ValErr.encapsulate(() -> process.waitFor());
+        gobbler.setInputStream(run.val().getInputStream());
+        CompletableFuture<Void> handling = CompletableFuture.supplyAsync(gobbler, pool);
+        Future<?> handling = globalSequentialExecutor.submit(gobbler);
+        Future<Exception> logging = globalSequentialExecutor.submit(() -> logger.asNewFile(run.val().getInputStream()));
+
+
+        return ValErr.encapsulate(() -> run.val().waitFor());
     }
 
 

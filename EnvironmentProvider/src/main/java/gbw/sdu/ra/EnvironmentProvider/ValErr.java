@@ -1,5 +1,7 @@
 package gbw.sdu.ra.EnvironmentProvider;
 
+import java.util.function.Consumer;
+
 //Because GoLang did it right
 public record ValErr<T,R>(T val, R err) {
 
@@ -76,12 +78,15 @@ public record ValErr<T,R>(T val, R err) {
         return of(result, null);
     }
 
-
-
     public boolean hasError(){
         return this.err() != null;
     }
-
+    public ValErr<T,R> ifValueDo(Consumer<T> func){
+        if(this.val != null){
+            func.accept(this.val);
+        }
+        return this;
+    }
 
     @Override
     public String toString(){
