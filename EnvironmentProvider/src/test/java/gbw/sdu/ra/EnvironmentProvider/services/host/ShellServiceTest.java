@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,12 +65,12 @@ class ShellServiceTest {
         //Create a temp testing directory
         File tempDir = new File("./ShellServiceTestLogs" + System.currentTimeMillis());
         assertTrue(tempDir.mkdir());
-        //defer(tempDir::delete);
+        defer(tempDir::delete);
 
         LogWriter logWriter = new LogWriter(tempDir, "ShellServiceTest");
         ShellService service = new ShellService(logWriter);
         //Expect it to succeed
-        ValErr<Integer,Exception> result = service.execSeqSync(testCmd);
+        ValErr<Integer,Exception> result = service.execSeqSync(testCmd, new ProcessOutputHandler(l ->{}));
         if(result.hasError()) result.err().printStackTrace();
         assertFalse(result.hasError());
         assertEquals(0,result.val());
@@ -77,12 +78,13 @@ class ShellServiceTest {
         File[] contentsOfTempLogDir = tempDir.listFiles();
         assertNotNull(contentsOfTempLogDir);
         assertEquals(1,contentsOfTempLogDir.length);
-        ValErr<List<String>,Exception> readLoggedFile = ValErr.encapsulate(() -> Files.readAllLines(Paths.get(contentsOfTempLogDir[0].getPath())));
+        ValErr<List<String>,Exception> readLoggedFile = ValErr.encapsulate(() -> Files.readAllLines(Path.of(contentsOfTempLogDir[0].toURI())));
         if(readLoggedFile.hasError()) result.err().printStackTrace();
         assertFalse(readLoggedFile.hasError());
         List<String> fileContents = readLoggedFile.val();
         assertNotNull(fileContents);
-
+        assertEquals(1,fileContents.size());
+        assertEquals("\"hello there\"", fileContents.get(0));
     }
 
     @AfterEach

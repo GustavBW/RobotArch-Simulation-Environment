@@ -27,7 +27,7 @@ RUN go mod download
 #Notice the "--" surpurfluos seperator as part of the npm run start, it tells npm to account for the following arguments following it.
 ENV RA_PROCESS_RUN_CMD_ROOT="cd ./processes/BusyWait && npm run start --"
 ENV RA_PROCESS_NAME="BusyWait"
-ENV RA_API_VERSION="v1"
+ENV RA_API_VERSION="vThisIsATestFile"
 #4242 is the fallback
 ENV RA_INTERNAL_SERVER_PORT=4242
 

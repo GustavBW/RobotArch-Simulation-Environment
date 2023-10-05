@@ -1,6 +1,10 @@
 package gbw.sdu.ra.EnvironmentProvider.services.host;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public class ProcessOutputHandler extends Thread {
@@ -12,40 +16,41 @@ public class ProcessOutputHandler extends Thread {
 
     private InputStream inputStream;
 
-    public static ProcessOutputHandler NOOP = new ProcessOutputHandler(OutputStream.nullOutputStream());
-
     private final VoidFunction onRunDo;
+    private final List<Consumer<String>> perLineExec = Collections.synchronizedList(new ArrayList<>());
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
 
-    public ProcessOutputHandler(OutputStream outputStream) {
-        onRunDo = () -> {
-            try {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-                PrintWriter writer = new PrintWriter(outputStream);
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    writer.println(line);
-                    writer.flush();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        };
-    }
     public ProcessOutputHandler(Consumer<String> consoomer){
+        perLineExec.add(consoomer);
         onRunDo = () -> {
             new BufferedReader(new InputStreamReader(inputStream)).lines()
-                    .forEach(consoomer);
+                    .forEach(line -> perLineExec
+                            .forEach(func -> func.accept(line))
+                    );
         };
     }
+    @Override
+    public void run() {
+        isRunning.set(true);
+        onRunDo.apply();
+        isRunning.set(false);
+    }
+
+    /**
+     *
+     * @return False if its currently in use and thus cannot accept new functions
+     */
+    public synchronized boolean appendPerLineExec(Consumer<String> perLineFunc){
+        if(isRunning.get()) return false;
+        perLineExec.add(perLineFunc);
+        return true;
+    }
+
 
     public void setInputStream(InputStream stream){
         this.inputStream = stream;
     }
 
-    @Override
-    public void run() {
-        onRunDo.apply();
-    }
+
 }

@@ -15,8 +15,8 @@ public class DockerfileBuilder {
 
     private static Timestamped<List<File>> KNOWN_REFERENCE_FILES;
     private final static long CACHE_INVALIDATION_RATE = 30_000; //in ms
-    private final static String REFERENCE_FILE_DIR = "./dockerReferenceFiles";
-    private final static String OUTPUT_FILE_DIR = "./deploymentDockerfiles";
+    private static String REFERENCE_FILE_DIR = "./dockerReferenceFiles";
+    private static String OUTPUT_FILE_DIR = "./deploymentDockerfiles";
     private String irn;
     private String filename;
     private String apiVersion;
@@ -24,6 +24,13 @@ public class DockerfileBuilder {
 
     private final LinkedHashMap<String,List<String>> linesPerSegmentMap = new LinkedHashMap<>();
     private int latestUnnamedSegment = 0;
+
+    public DockerfileBuilder(){}
+
+    DockerfileBuilder(String testOut, String testIn){
+        REFERENCE_FILE_DIR = testIn;
+        OUTPUT_FILE_DIR = testOut;
+    }
 
     public static Exception init(){
         File tempDir = new File(OUTPUT_FILE_DIR);
@@ -51,9 +58,10 @@ public class DockerfileBuilder {
         try(BufferedReader reader = new BufferedReader(new FileReader(referenceFile))){
             Exception[] err = new Exception[1];
             reader.lines()
-                    .filter(line -> line.trim().startsWith("#"))
+                    .filter(line -> !line.startsWith("#"))
                     .forEach(line -> processLine(line, err));
-            if(err[0] != null && apiVersion == null){
+
+            if(err[0] == null && apiVersion == null){
                 err[0] = new Exception("RA_API_VERSION not specified.");
             }
             return err[0];
@@ -67,6 +75,7 @@ public class DockerfileBuilder {
             "RA_INTERNAL_SERVER_PORT", this::readInternalPort
     );
     public void processLine(String line, Exception[] err) {
+        System.out.println(line);
         if(!line.startsWith("<slot")){
             linesPerSegmentMap.computeIfAbsent(latestUnnamedSegment + "", k -> new ArrayList<>()).add(line);
             if(line.startsWith("ENV")){
