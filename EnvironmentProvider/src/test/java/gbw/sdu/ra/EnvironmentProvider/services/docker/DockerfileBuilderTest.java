@@ -1,5 +1,7 @@
 package gbw.sdu.ra.EnvironmentProvider.services.docker;
 
+import gbw.sdu.ra.EnvironmentProvider.ValErr;
+import gbw.sdu.ra.EnvironmentProvider.dtos.ServerSpecification;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +12,9 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,28 +22,32 @@ import static org.junit.jupiter.api.Assertions.*;
 class DockerfileBuilderTest {
 
     private static final String REFERENCE_FILE_DIR = "./dockerReferenceFiles";
-    private File testReferenceFile;
+    private File exampleFile;
     private String testReferenceFileName = ".example";
     private File tempOutDir;
-    private String tempOutDirPath = "./dockerReferenceTestFiles";
-    private String tempInDirPath = "./DockerfileBuilderTestDir";
+    private String tempOutDirPath = "./dockerTestOutDir";
+    private String tempInDirPath = "./dockerfileBuilderTestDir";
     private File tempInDir;
 
     // Initialize the temporary reference file directory before each test
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
         // Create the temporary reference file directory if it doesn't exist
-        testReferenceFile = new File(REFERENCE_FILE_DIR + "/" + testReferenceFileName);
-        if (!testReferenceFile.exists()) {
+        exampleFile = new File(REFERENCE_FILE_DIR + "/" + testReferenceFileName);
+        if (!exampleFile.exists()) {
             fail("Unable to find .example test file in ./dockerReferenceFiles.");
         }
         tempOutDir = new File(tempOutDirPath + System.currentTimeMillis());
-        if(!tempOutDir.exists() && !tempOutDir.mkdir()){
-            fail("Unable to establish /dockerReferenceTestFiles for testing purposes");
+        tempOutDir.createNewFile();
+        tempOutDir.mkdir();
+        if(!tempOutDir.exists()){
+            fail("Unable to establish /dockerTestOutDir for testing purposes");
         }
         tempOutDir.deleteOnExit();
         tempInDir = new File(tempInDirPath);
-        if(!tempInDir.exists() && !tempInDir.mkdir()){
+        tempInDir.createNewFile();
+        tempInDir.mkdir();
+        if(!tempInDir.exists()){
             fail("Unable to establish temp input dir");
         }
         tempInDir.deleteOnExit();
@@ -78,7 +87,7 @@ class DockerfileBuilderTest {
 
     @Test
     void getReferenceFiles() {
-        assertTrue(DockerfileBuilder.getReferenceFiles().contains(testReferenceFile));
+        assertTrue(DockerfileBuilder.getReferenceFiles().contains(exampleFile));
     }
 
     @Test
@@ -89,7 +98,7 @@ class DockerfileBuilderTest {
         DockerfileBuilder builder = new DockerfileBuilder();
 
         // Build from the valid reference file
-        Exception error = builder.buildFromFile(testReferenceFile);
+        Exception error = builder.buildFromFile(exampleFile);
 
         // Ensure no error occurred during the build
         assertNull(error);
@@ -131,49 +140,78 @@ class DockerfileBuilderTest {
         assertTrue(error instanceof FileNotFoundException);
     }
 
-
-
     @Test
-    void testBuildFromFile() {
-    }
+    void contentReadTest(){
+        DockerfileBuilder builder = new DockerfileBuilder();
+        Exception err = builder.buildFromFile(exampleFile);
+        assertNull(err);
+        Map<String, List<String>> segments = builder.__getFileMap();
+        //It should pick up on the slots
+        List<String> expectedKeys = List.of("dependencies", "env", "build", "exec");
+        for(String expected : expectedKeys){
+            System.out.println("Expecting key: " + expected);
+            List<String> value = segments.get(expected);
+            assertNotNull(value);
+            assertEquals(0, value.size());
+        }
 
-    @Test
-    void processLine() {
+        //There should be an unnamed segment between each slot-based segment
+        Collection<List<String>> allSegments = segments.values();
+        assertTrue(allSegments.size() > expectedKeys.size());
+        //Specifically for the test file there should be 4 unnamed and 4 named segments
+        allSegments.forEach(System.out::println);
+        assertEquals(8,allSegments.size());
     }
-
-    @Test
-    void readInternalPort() {
-    }
-
-    @Test
-    void readApiVersion() {
-    }
-
     @Test
     void fillHostSpecifcEnvVars() {
+        DockerfileBuilder builder = new DockerfileBuilder();
+        //The following values should be formatted and filled in as ENV statements
+        builder.fillHostSpecifcEnvVars(69,69,"here");
+        List<String> envSegment = builder.__getFileMap().get("env");
+        assertNotNull(envSegment);
+        envSegment = envSegment.stream().filter(line -> !line.startsWith("#")).toList();
+        assertEquals("ENV RA_CONTAINER_EXTERNAL_PORT=69",envSegment.get(0));
+        assertEquals("ENV RA_ENVIRONMENT_ID=69",envSegment.get(1));
+        assertEquals("ENV RA_CONTAINER_HOST_IP=here",envSegment.get(2));
     }
 
     @Test
     void fillSpecificationEnvVars() {
-    }
-
-    @Test
-    void addEnv() {
+        ServerSpecification spec = new ServerSpecification("test",32098,32,52,2573);
+        DockerfileBuilder builder = new DockerfileBuilder();
+        builder.fillSpecificationEnvVars(spec);
+        List<String> envSegment = builder.__getFileMap().get("env");
+        assertNotNull(envSegment);
+        envSegment = envSegment.stream().filter(line -> !line.startsWith("#")).toList();
+        //With only the specification-based environment variables set, they should be first in this segment
+        assertEquals("ENV RA_STATIC_LATENCY="+spec.latency(), envSegment.get(0));
+        assertEquals("ENV RA_CPUS="+spec.cpus(), envSegment.get(1));
+        assertEquals("ENV RA_MEMORY="+spec.memory(), envSegment.get(2));
+        assertEquals("ENV RA_IRN="+spec.irn(), envSegment.get(3));
     }
 
     @Test
     void saveAndGetPath() {
-    }
+        //The whole ordeal. Lets go
+        DockerfileBuilder builder = new DockerfileBuilder(tempOutDirPath,REFERENCE_FILE_DIR);
+        Exception err = builder.buildFromFile(exampleFile);
+        assertNull(err);
 
-    @Test
-    void getApiVersion() {
+        ServerSpecification spec = new ServerSpecification("test",32098,32,52,2573);
+        builder.fillSpecificationEnvVars(spec);
+        builder.fillHostSpecifcEnvVars(69,69,"here");
+
+        ValErr<String, Exception> saveAttempt = builder.saveAndGetPath();
+        if(saveAttempt.hasError()) saveAttempt.err().printStackTrace();
+        assertFalse(saveAttempt.hasError());
+        String path = saveAttempt.val();
+        assertNotNull(path);
+
+
     }
 
     @Test
     void getFileName() {
     }
 
-    @Test
-    void getServerPort() {
-    }
 }

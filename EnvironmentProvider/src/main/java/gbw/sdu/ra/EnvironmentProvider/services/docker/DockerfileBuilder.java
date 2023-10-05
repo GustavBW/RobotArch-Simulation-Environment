@@ -17,6 +17,7 @@ public class DockerfileBuilder {
     private final static long CACHE_INVALIDATION_RATE = 30_000; //in ms
     private static String REFERENCE_FILE_DIR = "./dockerReferenceFiles";
     private static String OUTPUT_FILE_DIR = "./deploymentDockerfiles";
+    private static String PROVIDER_COMMENT_PREFIX = "@EP";
     private String irn;
     private String filename;
     private String apiVersion;
@@ -59,6 +60,7 @@ public class DockerfileBuilder {
             Exception[] err = new Exception[1];
             reader.lines()
                     .filter(line -> !line.startsWith("#"))
+                    .filter(line -> !line.trim().isBlank())
                     .forEach(line -> processLine(line, err));
 
             if(err[0] == null && apiVersion == null){
@@ -74,8 +76,7 @@ public class DockerfileBuilder {
               "RA_API_VERSION", this::readApiVersion,
             "RA_INTERNAL_SERVER_PORT", this::readInternalPort
     );
-    public void processLine(String line, Exception[] err) {
-        System.out.println(line);
+    private void processLine(String line, Exception[] err) {
         if(!line.startsWith("<slot")){
             linesPerSegmentMap.computeIfAbsent(latestUnnamedSegment + "", k -> new ArrayList<>()).add(line);
             if(line.startsWith("ENV")){
@@ -124,31 +125,38 @@ public class DockerfileBuilder {
     }
 
     public void fillHostSpecifcEnvVars(long environmentId, int port, String hostIpv4){
-        linesPerSegmentMap.get("env").add("# Following host specific env vars have been set by the EnvironmentProvider");
+        addComment("env","Following host specific env vars have been set by the EnvironmentProvider");
         addEnv("RA_CONTAINER_EXTERNAL_PORT", port + "");
         addEnv("RA_ENVIRONMENT_ID", environmentId + "");
         addEnv("RA_CONTAINER_HOST_IP", hostIpv4);
-        linesPerSegmentMap.get("env").add("# EnvironmentProvider injection end");
+        addComment("env", "insertion end");
     }
 
     public void fillSpecificationEnvVars(ServerSpecification specification){
         this.irn = specification.irn(); //Stored for generating filename
-        linesPerSegmentMap.get("env").add("# Following ServerSpecification env vars have been set by the EnvironmentProvider");
+        addComment("env", "Following ServerSpecification env vars have been set by the EnvironmentProvider");
         addEnv("RA_STATIC_LATENCY",specification.latency() + "");
         addEnv("RA_CPUS", specification.cpus() + "");
         addEnv("RA_MEMORY", specification.memory() + "");
         addEnv("RA_IRN", irn);
-        linesPerSegmentMap.get("env").add("# EnvironmentProvider injection end");
+        addComment("env", "insertion end");
     }
 
     public void addEnv(String key, String value){
-        linesPerSegmentMap.computeIfAbsent("env", k -> new ArrayList<>()).add("ENV " + key + "=" + value);
+        linesPerSegmentMap.computeIfAbsent("env", k -> new ArrayList<>())
+                .add("ENV " + key + "=" + value);
+    }
+
+    public void addComment(String segmentKey, String comment){
+        linesPerSegmentMap.computeIfAbsent(segmentKey, k -> new ArrayList<>())
+                .add("#" + PROVIDER_COMMENT_PREFIX + " " + comment);
     }
 
     public ValErr<String,Exception> saveAndGetPath(){
         filename = irn + "_" + System.currentTimeMillis();
         File actualFile = new File(OUTPUT_FILE_DIR+"/"+filename);
-        try (FileWriter writer = new FileWriter(actualFile.getPath())){
+
+        try (FileWriter writer = new FileWriter(actualFile)){
             for(String line : render().toList()) {
                 writer.write(line + "\n");
             }
@@ -176,6 +184,9 @@ public class DockerfileBuilder {
         return linesPerSegmentMap.values()
                 .stream()
                 .flatMap(Collection::stream);
+    }
+    Map<String,List<String>> __getFileMap(){
+        return linesPerSegmentMap;
     }
 
 }
