@@ -6,7 +6,7 @@ import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class LogWriter {
+public class LogWriter implements ILogWriter {
 
     private final File dir;
     private final String origin;
@@ -35,32 +35,10 @@ public class LogWriter {
         return null;
     }
 
-    public ValErr<Instance,Exception> startLoggingInstance(){
+    public ValErr<ILogWriter.Instance,Exception> startLoggingInstance(){
         File logFile = new File(dir.getPath() + "/" + getNewFileName());
-        return ValErr.encapsulate(()->new Instance(new FileOutputStream(logFile)));
+        return ValErr.encapsulate(()->new ILogWriter.Instance(new FileOutputStream(logFile)));
     }
-
-    public static class Instance implements AutoCloseable{
-        private final PrintWriter writer;
-        private final FileOutputStream outStream;
-        public Instance(FileOutputStream outStream){
-            this.writer = new PrintWriter(outStream);
-            this.outStream = outStream;
-        }
-        public void writeLine(String line){
-            writer.println(line);
-            writer.flush();
-        }
-
-        @Override
-        public void close() throws Exception {
-            writer.close();
-            outStream.flush();
-            outStream.close();
-        }
-    }
-
-
 
     public String getNewFileName(){
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("ddMMyyyy_HH_mm_ss");

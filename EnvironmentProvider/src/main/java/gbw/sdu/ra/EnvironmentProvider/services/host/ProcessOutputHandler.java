@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-public class ProcessOutputHandler extends Thread {
+public class ProcessOutputHandler extends Thread implements IProcessOutputHandler {
 
     @FunctionalInterface
     private interface VoidFunction{

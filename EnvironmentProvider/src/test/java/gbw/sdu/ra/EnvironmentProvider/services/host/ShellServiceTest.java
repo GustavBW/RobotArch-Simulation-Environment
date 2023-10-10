@@ -66,6 +66,7 @@ class ShellServiceTest {
         File tempDir = new File("./ShellServiceTestLogs" + System.currentTimeMillis());
         assertTrue(tempDir.mkdir());
         defer(tempDir::delete);
+        tempDir.deleteOnExit();
 
         LogWriter logWriter = new LogWriter(tempDir, "ShellServiceTest");
         ShellService service = new ShellService(logWriter);
@@ -103,6 +104,12 @@ class ShellServiceTest {
         @Override
         public Exception asNewFile(InputStream stream){
             return null;
+        }
+        @Override
+        public ValErr<ILogWriter.Instance,Exception> startLoggingInstance(){
+            File faux = new File("./NoopLogWriter" + System.currentTimeMillis());
+            faux.deleteOnExit();
+            return ValErr.encapsulate(() -> new ILogWriter.Instance(new FileOutputStream(faux)));
         }
 
     }

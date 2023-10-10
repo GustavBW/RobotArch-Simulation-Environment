@@ -9,10 +9,7 @@ import java.io.*;
 import java.util.concurrent.*;
 
 @Service
-public class ShellService {
-    private final ExecutorService globalSequentialExecutor = Executors.newVirtualThreadPerTaskExecutor();
-
-    private final ForkJoinPool pool = new ForkJoinPool(3);
+public class ShellService implements IShellService {
     private final LogWriter logger;
 
     @Autowired
@@ -34,20 +31,19 @@ public class ShellService {
         return null;
     }
 
-    /**
-     * @param cmd Does not support white-space names - because windows amirite
-     * @return Either an error as soon as possible, or the exit code of the process
-     * Duly note that exit code 0 means success.
-     */
+
+
+    @Override
     public ValErr<Integer,Exception> execSeqSync(String[] cmd){
         return execSeqSync(cmd, new ProcessOutputHandler(l -> {}));
     }
+    @Override
     public ValErr<Integer,Exception> execSeqSync(String[] cmd, ProcessOutputHandler gobbler){
         ProcessBuilder processBuilder = new ProcessBuilder(cmd);
         processBuilder.redirectErrorStream(true);
-        ValErr<LogWriter.Instance,Exception> startLoggingInstance = logger.startLoggingInstance();
+        ValErr<ILogWriter.Instance,Exception> startLoggingInstance = logger.startLoggingInstance();
 
-        try (LogWriter.Instance loggingInstance = startLoggingInstance.val()){
+        try (ILogWriter.Instance loggingInstance = startLoggingInstance.val()){
             if(startLoggingInstance.hasError()) startLoggingInstance.err().printStackTrace();
             gobbler.appendPerLineExec(loggingInstance::writeLine);
 
@@ -62,9 +58,5 @@ public class ShellService {
         }
         return ValErr.value(-1);
     }
-
-
-
-    private static final String[] EMPTY = new String[0];
 
 }

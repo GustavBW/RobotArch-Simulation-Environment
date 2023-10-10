@@ -19,7 +19,7 @@ public class DockerServerDeployer {
     private final HostAccessService hostService;
     private final ShellService shell;
     @Autowired
-    public DockerServerDeployer(MetadataAggregator aggregator, ShellService shell, EnvironmentRegistry environment, HostAccessService hostService){
+    public DockerServerDeployer(ShellService shell, EnvironmentRegistry environment, HostAccessService hostService){
         this.environment = environment;
         this.hostService = hostService;
         this.shell = shell;
@@ -59,7 +59,7 @@ public class DockerServerDeployer {
         return ValErr.value(environment.addDeployed(id, metadataUrl, specification));
     }
 
-    private Exception deployContainer(String imageName, DockerfileBuilder fileBuilder, int hostPort) {
+    Exception deployContainer(String imageName, DockerfileBuilder fileBuilder, int hostPort) {
         String[] runCmd = new String[]{
                 "docker", "run", imageName,
                 "--name=RA_SIM_"+ fileBuilder.getFileName(),
@@ -71,7 +71,7 @@ public class DockerServerDeployer {
         return null;
     }
 
-    public Exception buildImage(String imageName, String dockerfilePath, ServerSpecification specification){
+    Exception buildImage(String imageName, String dockerfilePath, ServerSpecification specification){
         String[] buildCmd = new String[]{
                 "docker","build",
                 "--tag=" + imageName,

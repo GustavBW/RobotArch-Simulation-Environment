@@ -38,7 +38,6 @@ class DockerfileBuilderTest {
             fail("Unable to find .example test file in ./dockerReferenceFiles.");
         }
         tempOutDir = new File(tempOutDirPath + System.currentTimeMillis());
-        tempOutDir.createNewFile();
         tempOutDir.mkdir();
         if(!tempOutDir.exists()){
             fail("Unable to establish /dockerTestOutDir for testing purposes");
@@ -149,7 +148,6 @@ class DockerfileBuilderTest {
         //It should pick up on the slots
         List<String> expectedKeys = List.of("dependencies", "env", "build", "exec");
         for(String expected : expectedKeys){
-            System.out.println("Expecting key: " + expected);
             List<String> value = segments.get(expected);
             assertNotNull(value);
             assertEquals(0, value.size());
@@ -159,7 +157,6 @@ class DockerfileBuilderTest {
         Collection<List<String>> allSegments = segments.values();
         assertTrue(allSegments.size() > expectedKeys.size());
         //Specifically for the test file there should be 4 unnamed and 4 named segments
-        allSegments.forEach(System.out::println);
         assertEquals(8,allSegments.size());
     }
     @Test
@@ -207,7 +204,9 @@ class DockerfileBuilderTest {
         String path = saveAttempt.val();
         assertNotNull(path);
 
-
+        //Cleaning up
+        File file = new File(path);
+        file.deleteOnExit();
     }
 
     @Test

@@ -10,13 +10,7 @@ import java.net.Inet4Address;
 import java.net.ServerSocket;
 
 @Service
-public class HostAccessService {
-
-
-    public static String OS = System.getProperty("os.name").toLowerCase();
-    public static boolean IS_WINDOWS = OS.startsWith("windows");
-    public static boolean IS_LINUX = OS.startsWith("linux");
-    public static final boolean IS_MACOS = OS.startsWith("macos");
+public class HostAccessService implements IHostAccessService {
 
     private final ShellService shell;
 
@@ -25,6 +19,7 @@ public class HostAccessService {
         this.shell = shell;
     }
 
+    @Override
     public Exception verifyHost(){
         if(!isDockerRunning()) return new Exception("Docker is not accessible!");
         ValErr<String,Exception> getIpv4 = getIpv4();
@@ -35,7 +30,7 @@ public class HostAccessService {
         if(fileBuilderInit != null) return fileBuilderInit;
         return shell.init();
     }
-
+    @Override
     public ValErr<Integer,Exception> getAvailablePort(){
         try (ServerSocket socket = new ServerSocket(0)){
             return ValErr.value(socket.getLocalPort());
@@ -45,12 +40,12 @@ public class HostAccessService {
     }
 
     private String cachedIpv4 = null;
-
+    @Override
     public ValErr<String,Exception> getApplicationWD(){
         File here = new File(".");
         return ValErr.encapsulate(here::getCanonicalPath);
     }
-
+    @Override
     public ValErr<String,Exception> getIpv4(){
         if(cachedIpv4 == null){
             ValErr<String,Exception> attempt = ValErr.encapsulate(() -> Inet4Address.getLocalHost().getHostAddress());
@@ -62,11 +57,8 @@ public class HostAccessService {
         return ValErr.value(cachedIpv4);
     }
 
-    private final String[] silentDockerInfoCMD = new String[]{"docker","info",">","/dev/null","2>&1"};
-    private final String[] getLatestProcessExitCode = new String[]{"$?"};
-
+    @Override
     public boolean isDockerRunning(){
-        //TODO: Make this silent
         ValErr<Integer,Exception> getExitCode = shell.execSeqSync(new String[]{"docker","info"});
         if(getExitCode.val() != null){
             return getExitCode.val() == 0;

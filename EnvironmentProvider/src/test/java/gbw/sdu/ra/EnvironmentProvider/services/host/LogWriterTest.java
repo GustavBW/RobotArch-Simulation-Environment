@@ -30,6 +30,7 @@ class LogWriterTest {
     private File getTempDir(){
         File tempDir = new File("./LogWriterTestDir" + System.currentTimeMillis());
         tempDir.mkdir();
+        tempDir.deleteOnExit();
         assertNotNull(tempDir);
         deferList.add(tempDir::delete);
         return tempDir;
@@ -77,13 +78,13 @@ class LogWriterTest {
         LogWriter logger = new LogWriter(dir, "LogWriterTest");
 
         // Start logging an instance
-        ValErr<LogWriter.Instance, Exception> result = logger.startLoggingInstance();
+        ValErr<ILogWriter.Instance, Exception> result = logger.startLoggingInstance();
 
         // Ensure that no exception occurred during instance creation
         assertNull(result.err());
 
         // Write some data to the instance
-        LogWriter.Instance instance = result.val();
+        ILogWriter.Instance instance = result.val();
         instance.writeLine("This is a test log entry.");
         instance.writeLine("Another line for testing.");
 

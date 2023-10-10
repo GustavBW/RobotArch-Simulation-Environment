@@ -11,7 +11,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 //Depends on directories $WD/tempDockerfiles & $WD/dockerReferenceFiles
-public class DockerfileBuilder {
+public class DockerfileBuilder implements IDockerfileBuilder {
 
     private static Timestamped<List<File>> KNOWN_REFERENCE_FILES;
     private final static long CACHE_INVALIDATION_RATE = 30_000; //in ms
@@ -50,11 +50,12 @@ public class DockerfileBuilder {
         }
         return KNOWN_REFERENCE_FILES.data();
     }
-
+    @Override
     public Exception buildFromFile(String referenceFileName){
         File referenceFile = new File(REFERENCE_FILE_DIR + "/" +referenceFileName);
         return buildFromFile(referenceFile);
     }
+    @Override
     public Exception buildFromFile(File referenceFile){
         try(BufferedReader reader = new BufferedReader(new FileReader(referenceFile))){
             Exception[] err = new Exception[1];
@@ -97,14 +98,15 @@ public class DockerfileBuilder {
             latestUnnamedSegment++;
         }
     }
-    public Exception readInternalPort(String value){
+
+    Exception readInternalPort(String value){
         if(value.isBlank()) return null;
         String secondHalfCleaned = value.replaceAll("\"","").trim();
         this.internalServerPort = Integer.parseInt(secondHalfCleaned);
         return null;
     }
 
-    public Exception readApiVersion(String value){
+    Exception readApiVersion(String value){
         if(value.isBlank()) return new Exception("RA_API_VERSION not specified.");
         String secondHalfCleaned = value.replaceAll("\"","").trim();
         if(!secondHalfCleaned.contains("v")) return new Exception("RA_API_VERSION should be stated as \"v\"<number>");
@@ -123,7 +125,7 @@ public class DockerfileBuilder {
         linesPerSegmentMap.put(slotName, new ArrayList<>());
         return null;
     }
-
+    @Override
     public void fillHostSpecifcEnvVars(long environmentId, int port, String hostIpv4){
         addComment("env","Following host specific env vars have been set by the EnvironmentProvider");
         addEnv("RA_CONTAINER_EXTERNAL_PORT", port + "");
@@ -131,7 +133,7 @@ public class DockerfileBuilder {
         addEnv("RA_CONTAINER_HOST_IP", hostIpv4);
         addComment("env", "insertion end");
     }
-
+    @Override
     public void fillSpecificationEnvVars(ServerSpecification specification){
         this.irn = specification.irn(); //Stored for generating filename
         addComment("env", "Following ServerSpecification env vars have been set by the EnvironmentProvider");
@@ -141,17 +143,17 @@ public class DockerfileBuilder {
         addEnv("RA_IRN", irn);
         addComment("env", "insertion end");
     }
-
+    @Override
     public void addEnv(String key, String value){
         linesPerSegmentMap.computeIfAbsent("env", k -> new ArrayList<>())
                 .add("ENV " + key + "=" + value);
     }
-
+    @Override
     public void addComment(String segmentKey, String comment){
         linesPerSegmentMap.computeIfAbsent(segmentKey, k -> new ArrayList<>())
                 .add("#" + PROVIDER_COMMENT_PREFIX + " " + comment);
     }
-
+    @Override
     public ValErr<String,Exception> saveAndGetPath(){
         filename = irn + "_" + System.currentTimeMillis();
         File actualFile = new File(OUTPUT_FILE_DIR+"/"+filename);
@@ -165,17 +167,17 @@ public class DockerfileBuilder {
         }
         return ValErr.encapsulate(actualFile::getCanonicalPath);
     }
+    @Override
     public String getApiVersion(){
         return apiVersion;
     }
 
-    /**
-     * When saved, the isolated filename is accessible.
-     */
+    @Override
     public String getFileName(){
         return filename;
     }
 
+    @Override
     public int getServerPort(){
         return internalServerPort;
     }
