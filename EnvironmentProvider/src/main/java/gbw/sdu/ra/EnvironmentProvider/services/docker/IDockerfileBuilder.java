@@ -23,4 +23,5 @@ public interface IDockerfileBuilder {
      */
     String getFileName();
     int getServerPort();
+    String getSourceRootDir();
 }

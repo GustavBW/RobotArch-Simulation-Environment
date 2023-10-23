@@ -12,7 +12,6 @@ public class EnvironmentProviderApplication {
 	private static ApplicationContext context;
 
 	public static void main(String[] args) throws Exception {
-		System.out.println("EnvironmentProvider started with images:" + DockerfileBuilder.getReferenceFiles());
 		context = SpringApplication.run(EnvironmentProviderApplication.class, args);
 		HostAccessService hostService = context.getBean(HostAccessService.class);
 		Exception hostFailure = hostService.verifyHost();
@@ -21,6 +20,7 @@ public class EnvironmentProviderApplication {
 		}else{
 			System.out.println("EnvironmentProvider host verified and good to Go.");
 		}
+		System.out.println("EnvironmentProvider started with images:" + DockerfileBuilder.getReferenceFiles());
 	}
 
 }

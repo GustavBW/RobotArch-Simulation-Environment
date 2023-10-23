@@ -84,8 +84,10 @@ class ShellServiceTest {
         assertFalse(readLoggedFile.hasError());
         List<String> fileContents = readLoggedFile.val();
         assertNotNull(fileContents);
-        assertEquals(1,fileContents.size());
-        assertEquals("\"hello there\"", fileContents.get(0));
+
+        //Due to new insertion of command run for the given output, this changes how to evaluate this:
+        assertEquals(4,fileContents.size());
+        assertEquals("\"hello there\"", fileContents.get(3));
     }
 
     @AfterEach

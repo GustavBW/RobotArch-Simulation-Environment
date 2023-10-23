@@ -48,7 +48,7 @@ public class DockerServerDeployer {
         String imageName = specification.asCompressedString() + ":" + fileBuilder.getApiVersion();
 
         // <---------------- Building Image ---------------->
-        Exception buildError = buildImage(imageName,dockerfilePath,specification);
+        Exception buildError = buildImage(imageName,fileBuilder.getSourceRootDir(), dockerfilePath, specification);
         if(buildError != null) return ValErr.error(buildError);
 
         // <---------------- Starting Container ---------------->
@@ -71,13 +71,14 @@ public class DockerServerDeployer {
         return null;
     }
 
-    Exception buildImage(String imageName, String dockerfilePath, ServerSpecification specification){
+    Exception buildImage(String imageName, String dockerBuildContext, String dockerFileName, ServerSpecification specification){
         String[] buildCmd = new String[]{
                 "docker","build",
-                "--tag=" + imageName,
-                "--file=" + dockerfilePath,
+                "--tag=\"" + imageName +"\"",
+                "--file=\"" + dockerFileName + "\"",
                 "--memory=" + specification.memory(),
-                "--cpu-shares=" + specification.cpus()
+                "--cpu-shares=" + specification.cpus(),
+                dockerBuildContext
         };
         ValErr<Integer,Exception> buildImage = shell.execSeqSync(buildCmd);
         if(buildImage.hasError()) return buildImage.err();

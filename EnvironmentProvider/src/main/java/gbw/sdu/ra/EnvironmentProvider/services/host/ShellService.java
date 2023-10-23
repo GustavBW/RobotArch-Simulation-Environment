@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.concurrent.*;
 
 @Service
@@ -46,6 +47,10 @@ public class ShellService implements IShellService {
         try (ILogWriter.Instance loggingInstance = startLoggingInstance.val()){
             if(startLoggingInstance.hasError()) startLoggingInstance.err().printStackTrace();
             gobbler.appendPerLineExec(loggingInstance::writeLine);
+
+            loggingInstance.writeLine("[INSERTED BY ENVIRONMENT PROVIDER v]");
+            loggingInstance.writeLine(Arrays.toString(cmd));
+            loggingInstance.writeLine("[END OF INSERT ^]");
 
             Process process = processBuilder.start();
             gobbler.setInputStream(process.getInputStream());

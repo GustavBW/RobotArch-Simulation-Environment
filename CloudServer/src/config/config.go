@@ -104,9 +104,9 @@ func LoadEnvironmentAttributes() {
 	} else {
 		CONTAINER_HOST_IP = containerHostIp
 	}
-	var apiVersion = os.Getenv("API_VERSION")
+	var apiVersion = os.Getenv("RA_API_VERSION")
 	if apiVersion == "" {
-		fmt.Println("API_VERSION environment variable not set, defaulting to v-1")
+		fmt.Println("RA_API_VERSION environment variable not set, defaulting to v-1")
 	} else {
 		API_VERSION = apiVersion
 	}

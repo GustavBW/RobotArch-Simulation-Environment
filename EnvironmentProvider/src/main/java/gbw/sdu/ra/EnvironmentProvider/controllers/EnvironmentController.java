@@ -100,6 +100,7 @@ public class EnvironmentController {
         if(referenceFile == null){
             return new REBuilder<ServerMetadata>()
                     .status(HttpStatus.NOT_FOUND)
+                    .addHeader(REBuilder.DDH, "No such reference file name.")
                     .build();
         }
         //actually deploying the thing: (might take a while)

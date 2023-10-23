@@ -1,18 +1,12 @@
 #EXAMPLE DO NOT DEPLOY (idk what would happen)
 # Dedicated GoLang image
-FROM golang:1.19-alpine
+FROM golang:1.21.3-alpine3.18
 
 # Establishing internal workdir
 WORKDIR /sdu-ra-cloud-server
 
-#PHP $References work here
-ARG SOURCE_DIR=howtfwouldIknow
-
 # Copy go.mod and go.sum files to internal workdir
-COPY go.mod go.sum ./ --from=$SOURCE_DIR
-
-RUN sudo apt-get install -y nodejs
-RUN echo "nodejs version: $(nodejs --version)"
+COPY ./CloudServer/go.mod ./CloudServer/go.sum ./
 
 # Updates go.mod and go.sum files based on project usage
 RUN go mod tidy
@@ -20,6 +14,10 @@ RUN go mod tidy
 RUN go mod verify
 # Downloads dependencies
 RUN go mod download
+
+RUN apk update && apk add --no-cache nodejs
+RUN apk add --no-cache npm
+
 <slot name="dependencies"/>
 
 #How to run the process - with no flags or args
@@ -30,6 +28,7 @@ ENV RA_PROCESS_NAME="BusyWait"
 ENV RA_API_VERSION="vThisIsATestFile"
 #4242 is the fallback
 ENV RA_INTERNAL_SERVER_PORT=4242
+ENV RA_SOURCE="E:\GitHub\RobotArch-Simulation-Environment"
 
 #The rest is injected by the EnvironmentProvider
 <slot name="env"/>
@@ -46,16 +45,13 @@ ENV RA_INTERNAL_SERVER_PORT=4242
 
 <slot name="build"/>
 # Copy the entire project to internal workdir
-COPY . .
+COPY ./CloudServer .
 # Copy the busy wait js file to internal workdir
-COPY ../BusyWait/* ./processes/BusyWait
-RUN cd processes && npm install
+COPY ./BusyWait ./processes/BusyWait
+RUN cd ./processes/BusyWait && npm install
 
 # Compile - builds executable
-RUN go build -o cloud-server ./src
-
-# Expose port 8889
-EXPOSE 8889
+RUN go build -o cloud-server ./src/main
 
 <slot name="exec"/>
 # Run the executable

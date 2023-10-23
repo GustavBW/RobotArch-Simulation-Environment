@@ -21,6 +21,7 @@ public class DockerfileBuilder implements IDockerfileBuilder {
     private String irn;
     private String filename;
     private String apiVersion;
+    private String sourceRootDir;
     private int internalServerPort = 4242;
 
     private final LinkedHashMap<String,List<String>> linesPerSegmentMap = new LinkedHashMap<>();
@@ -64,8 +65,9 @@ public class DockerfileBuilder implements IDockerfileBuilder {
                     .filter(line -> !line.trim().isBlank())
                     .forEach(line -> processLine(line, err));
 
-            if(err[0] == null && apiVersion == null){
-                err[0] = new Exception("RA_API_VERSION not specified.");
+
+            if(err[0] == null){
+                err[0] = buildFromFileCheck();
             }
             return err[0];
         } catch (IOException e){
@@ -73,9 +75,20 @@ public class DockerfileBuilder implements IDockerfileBuilder {
         }
     }
 
+    private Exception buildFromFileCheck(){
+        if(apiVersion == null){
+            return new Exception(RAEnvVars.API_VERSION.value + " not specified.");
+        }
+        if(sourceRootDir == null){
+            return new Exception(RAEnvVars.SOURCE.value + " not specified.");
+        }
+        return null;
+    }
+
     private Map<String,Function<String,Exception>> onEnvHandlers = Map.of(
-              "RA_API_VERSION", this::readApiVersion,
-            "RA_INTERNAL_SERVER_PORT", this::readInternalPort
+            RAEnvVars.API_VERSION.value, this::readApiVersion,
+            RAEnvVars.INTERNAL_SERVER_PORT.value, this::readInternalPort,
+            RAEnvVars.SOURCE.value, this::readSourceRootDir
     );
     private void processLine(String line, Exception[] err) {
         if(!line.startsWith("<slot")){
@@ -99,6 +112,13 @@ public class DockerfileBuilder implements IDockerfileBuilder {
         }
     }
 
+    Exception readSourceRootDir(String value){
+        if(value.isBlank()) return new Exception(RAEnvVars.SOURCE.value + " not specified.");
+        String secondHalfCleaned = value.replaceAll("\"","").trim();
+        this.sourceRootDir = secondHalfCleaned;
+        return null;
+    }
+
     Exception readInternalPort(String value){
         if(value.isBlank()) return null;
         String secondHalfCleaned = value.replaceAll("\"","").trim();
@@ -107,9 +127,9 @@ public class DockerfileBuilder implements IDockerfileBuilder {
     }
 
     Exception readApiVersion(String value){
-        if(value.isBlank()) return new Exception("RA_API_VERSION not specified.");
+        if(value.isBlank()) return new Exception(RAEnvVars.API_VERSION.value + " not specified.");
         String secondHalfCleaned = value.replaceAll("\"","").trim();
-        if(!secondHalfCleaned.contains("v")) return new Exception("RA_API_VERSION should be stated as \"v\"<number>");
+        if(!secondHalfCleaned.contains("v")) return new Exception(RAEnvVars.API_VERSION.value + " should be stated as \"v\"<number>");
         this.apiVersion = secondHalfCleaned;
         return null;
     }
@@ -128,19 +148,19 @@ public class DockerfileBuilder implements IDockerfileBuilder {
     @Override
     public void fillHostSpecifcEnvVars(long environmentId, int port, String hostIpv4){
         addComment("env","Following host specific env vars have been set by the EnvironmentProvider");
-        addEnv("RA_CONTAINER_EXTERNAL_PORT", port + "");
-        addEnv("RA_ENVIRONMENT_ID", environmentId + "");
-        addEnv("RA_CONTAINER_HOST_IP", hostIpv4);
+        addEnv(RAEnvVars.CONTAINER_EXTERNAL_PORT.value, port + "");
+        addEnv(RAEnvVars.ENVIRONMENT_ID.value, environmentId + "");
+        addEnv(RAEnvVars.CONTAINER_HOST_IP.value, hostIpv4);
         addComment("env", "insertion end");
     }
     @Override
     public void fillSpecificationEnvVars(ServerSpecification specification){
         this.irn = specification.irn(); //Stored for generating filename
         addComment("env", "Following ServerSpecification env vars have been set by the EnvironmentProvider");
-        addEnv("RA_STATIC_LATENCY",specification.latency() + "");
-        addEnv("RA_CPUS", specification.cpus() + "");
-        addEnv("RA_MEMORY", specification.memory() + "");
-        addEnv("RA_IRN", irn);
+        addEnv(RAEnvVars.STATIC_LATENCY.value,specification.latency() + "");
+        addEnv(RAEnvVars.CPUS.value, specification.cpus() + "");
+        addEnv(RAEnvVars.MEMORY.value, specification.memory() + "");
+        addEnv(RAEnvVars.IRN.value, irn);
         addComment("env", "insertion end");
     }
     @Override
@@ -180,6 +200,11 @@ public class DockerfileBuilder implements IDockerfileBuilder {
     @Override
     public int getServerPort(){
         return internalServerPort;
+    }
+
+    @Override
+    public String getSourceRootDir(){
+        return sourceRootDir;
     }
 
     private Stream<String> render(){
