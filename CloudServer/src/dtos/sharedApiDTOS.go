@@ -4,7 +4,7 @@ import "time"
 
 type ServerAction struct {
 	Method string `json:"method"`
-	Url    string `json:"url"`
+	Uri    string `json:"uri"`
 	Ip     string `json:"ip"`
 	Port   int32  `json:"port"`
 }
