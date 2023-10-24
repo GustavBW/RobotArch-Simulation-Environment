@@ -55,15 +55,18 @@ public class DockerServerDeployer {
         Exception containerStartError = deployContainer(imageName, fileBuilder, hostPort);
         if (containerStartError != null) return ValErr.error(containerStartError);
 
-        String metadataUrl = ip + ":" + hostPort + "/api/" + fileBuilder.getApiVersion() + "/metadata";
+        String metadataUrl = "http://" + ip + ":" + hostPort + "/api/" + fileBuilder.getApiVersion() + "/metadata";
         return ValErr.value(environment.addDeployed(id, metadataUrl, specification));
     }
 
     Exception deployContainer(String imageName, DockerfileBuilder fileBuilder, int hostPort) {
         String[] runCmd = new String[]{
-                "docker", "run", imageName,
-                "--name=RA_SIM_"+ fileBuilder.getFileName(),
-                "--expose=" + hostPort + ":" + fileBuilder.getServerPort(),
+                "docker", "run",
+                "--name=ra_sim_"+ fileBuilder.getFileName(),
+                "--publish=" + hostPort + ":" + fileBuilder.getServerPort(),
+                "--label=group=ra_sim",
+                "--detach",
+                imageName,
         };
         ValErr<Integer,Exception> startContainer = shell.execSeqSync(runCmd);
         if(startContainer.hasError()) return startContainer.err();

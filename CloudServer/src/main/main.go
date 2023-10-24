@@ -4,6 +4,7 @@ import (
 	sharedApi "CloudServer/src/api"
 	"CloudServer/src/config"
 	"fmt"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -14,6 +15,7 @@ func main() {
 
 	app := fiber.New()
 	app.Use(cors.New())
+	app.Use(logRequests)
 
 	sharedApi.Append(app)
 
@@ -21,4 +23,9 @@ func main() {
 	if launchErr != nil {
 		panic(launchErr)
 	}
+}
+
+func logRequests(c *fiber.Ctx) error {
+	fmt.Println("Request recieved: ", c.Method(), c.Path(), "\t\t at ", time.Now().Format(time.RFC3339), " from ", c.IP())
+	return c.Next()
 }

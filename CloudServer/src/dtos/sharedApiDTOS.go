@@ -6,7 +6,7 @@ type ServerAction struct {
 	Method string `json:"method"`
 	Url    string `json:"url"`
 	Ip     string `json:"ip"`
-	Port   int16  `json:"port"`
+	Port   int32  `json:"port"`
 }
 
 type ServerSpecification struct {
@@ -24,10 +24,10 @@ type SystemUtilization struct {
 }
 
 type ServerMetadata struct {
-	Id            int64               `json:"id"`
-	Actions       []ServerAction      `json:"actions"`
-	Specification ServerSpecification `json:"specification"`
-	Utilization   SystemUtilization   `json:"utilization"`
+	Id            int64                   `json:"id"`
+	Actions       map[string]ServerAction `json:"actions"`
+	Specification ServerSpecification     `json:"specification"`
+	Utilization   SystemUtilization       `json:"utilization"`
 }
 
 type ProcessResults struct {

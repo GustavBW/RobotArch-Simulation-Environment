@@ -16,8 +16,8 @@ var STORAGE int32 = -1
 var PROCESS_RUN_CMD string = "none"
 var PROCESS_NAME string = "none"
 var DEFAULT_DEBUG_HEADER string = "SDU_RA_Debug_Header"
-var CONTAINER_EXTERNAL_PORT int16 = -1
-var LISTENING_PORT int16 = 4242
+var CONTAINER_EXTERNAL_PORT int32 = -1
+var LISTENING_PORT int32 = 4242
 var CONTAINER_HOST_IP string = "unknown"
 var API_VERSION string = "v-1"
 
@@ -92,11 +92,11 @@ func LoadEnvironmentAttributes() {
 		PROCESS_NAME = processName
 	}
 	var containerExternalPort = os.Getenv("RA_CONTAINER_EXTERNAL_PORT")
-	var containerExternalPortAsInt, parseIntErrContainerExternalPort = strconv.ParseInt(containerExternalPort, 10, 16)
-	if parseIntErrContainerExternalPort != nil {
-		fmt.Println("RA_CONTAINER_EXTERNAL_PORT environment variable not valid: + " + containerExternalPort + ", defaulting to -1")
+	var containerExternalPortAsInt, parseIntErrContainerExternalPort = strconv.ParseInt(containerExternalPort, 10, 32)
+	if parseIntErrContainerExternalPort != nil || containerExternalPortAsInt < 0 || containerExternalPortAsInt > 65535 {
+		fmt.Println("RA_CONTAINER_EXTERNAL_PORT environment variable not valid: " + containerExternalPort + ", defaulting to -1")
 	} else {
-		CONTAINER_EXTERNAL_PORT = int16(containerExternalPortAsInt)
+		CONTAINER_EXTERNAL_PORT = int32(containerExternalPortAsInt)
 	}
 	var containerHostIp = os.Getenv("RA_CONTAINER_HOST_IP")
 	if containerHostIp == "" {
@@ -114,11 +114,11 @@ func LoadEnvironmentAttributes() {
 	if listeningPort == "" {
 		fmt.Println("RA_INTERNAL_SERVER_PORT environment variable not set, defaulting to 8080")
 	} else {
-		var listeningPortAsInt, parseIntErrListeningPort = strconv.ParseInt(listeningPort, 10, 16)
+		var listeningPortAsInt, parseIntErrListeningPort = strconv.ParseInt(listeningPort, 10, 32)
 		if parseIntErrListeningPort != nil {
 			fmt.Println("RA_INTERNAL_SERVER_PORT environment variable not valid: + " + listeningPort + ", defaulting to 8080")
 		} else {
-			LISTENING_PORT = int16(listeningPortAsInt)
+			LISTENING_PORT = int32(listeningPortAsInt)
 		}
 	}
 

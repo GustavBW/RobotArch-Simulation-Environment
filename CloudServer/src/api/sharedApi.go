@@ -17,7 +17,7 @@ import (
 	fiber "github.com/gofiber/fiber/v2"
 )
 
-var actions []dtos.ServerAction
+var actions map[string]dtos.ServerAction
 
 // Appends the shared api routes
 func Append(app *fiber.App) {
@@ -61,17 +61,23 @@ func Append(app *fiber.App) {
 	app.Post("/api/"+version+"/process", startProcess)
 }
 
-func generateServerActions() []dtos.ServerAction {
-	return []dtos.ServerAction{
-		{
+func generateServerActions() map[string]dtos.ServerAction {
+	return map[string]dtos.ServerAction{
+		"getMetadata": {
 			Method: "POST",
 			Url:    "/api/" + config.API_VERSION + "/process",
 			Ip:     config.CONTAINER_HOST_IP,
 			Port:   config.CONTAINER_EXTERNAL_PORT,
 		},
-		{
+		"startProcess": {
 			Method: "GET",
 			Url:    "/api/" + config.API_VERSION + "/metadata",
+			Ip:     config.CONTAINER_HOST_IP,
+			Port:   config.CONTAINER_EXTERNAL_PORT,
+		},
+		"shutdown": {
+			Method: "POST",
+			Url:    "/api/" + config.API_VERSION + "/shutdown",
 			Ip:     config.CONTAINER_HOST_IP,
 			Port:   config.CONTAINER_EXTERNAL_PORT,
 		},

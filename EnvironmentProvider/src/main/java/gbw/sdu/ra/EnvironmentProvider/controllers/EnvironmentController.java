@@ -111,6 +111,7 @@ public class EnvironmentController {
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .build();
         }
+        System.out.println("Deployment complete, getting metadata using: " + deploymentAttempt.val());
         //and finally:
         ValErr<ServerMetadata,Exception> gettingMetadata = aggregator.getFor(deploymentAttempt.val());
         if(gettingMetadata.hasError()){
@@ -133,7 +134,7 @@ public class EnvironmentController {
 
     @PostMapping("/register")
     public @ResponseBody ResponseEntity<ServerMetadata> registerRemoteServer(@RequestParam(required = false) String metadataUrl){
-        //I've actively disabled Spring own error handling by allowing a null url, but then handling it myself
+        //I've actively disabled Spring own error handling by allowing a null uri, but then handling it myself
         //This is done because Spring's error handling is a whole rat-pack of exceptions, and we don't do that here.
         if(metadataUrl == null){
             return new REBuilder<ServerMetadata>()
@@ -157,7 +158,7 @@ public class EnvironmentController {
                     .build();
         }
         //now register
-        ValErr<ServerMetadata,Exception> registerAttempt = environment.register(reachAttempt.val());
+        ValErr<ServerMetadata,Exception> registerAttempt = environment.register(reachAttempt.val(), metadataUrl);
         if(registerAttempt.hasError()){ //something went wrong... somehow
             return new REBuilder<>(reachAttempt.val())
                     .addHeader("DDH", registerAttempt.err().getMessage())
