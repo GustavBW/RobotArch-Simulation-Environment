@@ -16,11 +16,12 @@ RUN go mod download
 
 RUN apk update && apk add --no-cache nodejs
 RUN apk add --no-cache npm
+RUN apk add --no-cache bash
 
 <slot name="dependencies"/>
 
 #How to run the process - with no flags or args
-ENV RA_PROCESS_RUN_CMD_ROOT="cd ./processes/BusyWait && npm run start --"
+ENV RA_PROCESS_RUN_CMD_ROOT="npm run start --"
 ENV RA_PROCESS_NAME="BusyWait"
 ENV RA_API_VERSION=v1
 ENV RA_INTERNAL_SERVER_PORT=4242

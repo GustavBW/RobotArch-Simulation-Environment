@@ -13,13 +13,14 @@ public class EnvironmentProviderApplication {
 
 	private static ApplicationContext context;
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
 		context = SpringApplication.run(EnvironmentProviderApplication.class, args);
 		IHostAccessService hostService = context.getBean(IHostAccessService.class);
 		IEnvironmentRegistry registry = context.getBean(IEnvironmentRegistry.class);
 		Exception hostFailure = hostService.verifyHost();
 		if(hostFailure != null){
-			throw hostFailure;
+			hostFailure.printStackTrace();
+			Runtime.getRuntime().exit(400);
 		}else{
 			System.out.println("EnvironmentProvider host verified and good to Go.");
 		}

@@ -86,8 +86,17 @@ func generateServerActions() map[string]dtos.ServerAction {
 
 func startProcess(c *fiber.Ctx) error {
 	ApplyStaticLatency()
+
+	var wd, wdErr = os.Getwd()
+	if wdErr != nil {
+		c.Response().SetStatusCode(500)
+		c.Response().Header.Set(config.DEFAULT_DEBUG_HEADER, "Working directory issues: "+wdErr.Error())
+		return c.Next()
+	}
+	fmt.Println("[process] Current working directory: " + wd)
+
 	//Check if an executable exists:
-	var files, err = os.ReadDir("/processes")
+	var processDirs, err = os.ReadDir(wd + "/processes")
 	if err != nil {
 		c.Response().SetStatusCode(500)
 		c.Response().Header.Set(config.DEFAULT_DEBUG_HEADER, "Process directory issues: "+err.Error())
@@ -95,21 +104,22 @@ func startProcess(c *fiber.Ctx) error {
 	}
 	var expectedProcessName = config.PROCESS_NAME
 	var found = false
-	for _, file := range files {
+	for _, file := range processDirs {
 		if file.Name() == expectedProcessName {
 			found = true
 			break
 		}
 	}
 	if !found { //if the expected executable doesn't exist, return 404
+		fmt.Println("[process] Process not found: " + expectedProcessName)
 		c.Response().SetStatusCode(404)
 		c.Response().Header.Set(config.DEFAULT_DEBUG_HEADER, "Process not found: "+expectedProcessName)
 		return c.Next()
 	}
 
-	uuid := uuid.New() //calc input and output file names for future reference
-	var inputFileName = "process_input_" + uuid.String() + ".csv"
-	var outputFileName = "process_result_" + uuid.String() + ".txt"
+	var uuid = uuid.New() //calc input and output file names for future reference
+	var inputFileName = "process_input_" + uuid.String()
+	var outputFileName = "process_result_" + uuid.String()
 
 	//remove old i/o files if they exist
 	var wdFiles, readWDErr = os.ReadDir("./")
@@ -126,11 +136,29 @@ func startProcess(c *fiber.Ctx) error {
 		return c.Next()
 	}
 
+	var manualRouteOverride = c.Query("processRouteOverride")
+	var manualStartCmdOverride = c.Query("processRunCmdOverride")
+
 	var now = time.Now()
+	var pathToProcessWD = wd + "/processes/" + config.PROCESS_NAME
+	var processRunCmd = config.PROCESS_RUN_CMD
+	if manualStartCmdOverride != "" {
+		processRunCmd = manualStartCmdOverride
+	}
+	if manualRouteOverride != "" {
+		pathToProcessWD = manualRouteOverride
+	}
+
+	fmt.Fprintln(os.Stdout, "[process] Running: "+processRunCmd)
+	fmt.Fprintln(os.Stdout, "[process] With input file: "+inputFileName)
+	fmt.Fprintln(os.Stdout, "[process] In directory: "+pathToProcessWD)
 	//Then run the process with the input- and the output file as an argument
-	cmd := exec.Command(config.PROCESS_RUN_CMD + " --input-file-name=" + inputFileName + " --output-file-name=" + outputFileName)
+	//As we don't know exactly how this command will look nor work, we can't break it up into arguments
+	cmd := exec.Command("bash", "-c", processRunCmd+" --input-file-name="+inputFileName+" --output-file-name="+outputFileName)
+	cmd.Dir = pathToProcessWD
 	var processRunErr = cmd.Run() //cmd.Run is blocking
-	if processRunErr != nil {     //this is
+	if processRunErr != nil {
+		fmt.Println("[process] Process failed to execute: " + processRunErr.Error())
 		c.Response().SetStatusCode(500)
 		c.Response().Header.Set(config.DEFAULT_DEBUG_HEADER, "Process failed to execute: "+processRunErr.Error())
 		return c.Next()
@@ -139,6 +167,7 @@ func startProcess(c *fiber.Ctx) error {
 
 	var results, readErr = os.ReadFile(outputFileName)
 	if readErr != nil {
+		fmt.Println("[process] Output file issues: " + readErr.Error())
 		c.Response().SetStatusCode(500)
 		c.Response().Header.Set(config.DEFAULT_DEBUG_HEADER, "Output file issues: "+readErr.Error())
 		return c.Next()
@@ -149,7 +178,7 @@ func startProcess(c *fiber.Ctx) error {
 		Start:     time.Now(),
 		Result:    string(results),
 	}
-
+	fmt.Println("[process] Process completed successfully - from this guy's point of view at least")
 	c.Context().SetStatusCode(200)
 	return c.JSON(&resultStruct)
 }

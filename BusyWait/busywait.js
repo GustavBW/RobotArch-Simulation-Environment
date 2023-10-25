@@ -1,8 +1,9 @@
-import { readFileSync } from 'fs';
+import fs, { readFileSync } from 'fs';
 import { log, logAndExit } from "./src/logging.js";
 
 log("Process Started");
 log("args: " + process.argv);
+log("cwd: " + process.cwd());
 
 const argsContainingConfig = [];
 process.argv.forEach(function (val, index, array) {
@@ -24,26 +25,42 @@ for(let i = 0; i < argsContainingConfig.length; i++){
     }
 }
 if(inputFileName === undefined){
-    logAndExit("No input file name provided, exiting");
+    logAndExit("No input file name provided, exiting", 1);
 }
 if(outputFileName === undefined){
-    logAndExit("No output file name provided, exiting");
+    logAndExit("No output file name provided, exiting", 1);
 }
 
-const input = undefined
+let input = undefined
 try{
-    input = readFileSync("../"+inputFileName+".csv", 'utf8');
+    input = readFileSync("../../"+inputFileName, 'utf8');
+    log("Successfully read input file")
+    log("Input: " + input);
 }catch(e){
-    logAndExit("Failed to read input file, exiting");
+    log(e);
+    logAndExit("Failed to read input file, exiting", 1);
 }
 const values = input.split(",");
-const duration = values[0];
-if(!Number.isInteger(duration)){
-    logAndExit("Duration is not an integer, exiting");
+const duration = parseInt(values[0],10);
+if(Number.isNaN(duration)){
+    logAndExit("Duration {"+duration+"} is not parsable to an integer, exiting", 1);
 }
-const memoryMB = values[1];
-if(!Number.isInteger(memoryMB)){
-    logAndExit("MemoryMB is not an integer, exiting");
+const memoryMB = parseInt(values[1],10);
+if(Number.isNaN(memoryMB)){
+    logAndExit("MemoryMB {"+memoryMB+"} is not parsable to an integer, exiting", 1);
 }
 
-console.log("Not Implimented");
+const end = Date.now() + duration;
+while(Date.now() < end){
+    // Busy wait
+    console.log(""); //Sometimes the JVM just skips empty loops, I bet the NodeJS VM does too
+}
+
+try{
+    fs.writeFileSync("../../"+outputFileName, "BusyWait Complete, waited for " + duration + "ms");
+}catch (e){
+    log(e);
+    logAndExit("Failed to write output file, exiting", 1);
+}
+logAndExit("Process Complete", 0);
+
