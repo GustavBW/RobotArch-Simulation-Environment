@@ -1,40 +1,18 @@
 package gbw.sdu.ra.gaussianblur.algorithm;
 
-import java.util.concurrent.RecursiveTask;
+import gbw.sdu.ra.gaussianblur.ImageData;
 
-public class GaussianBlurTask extends RecursiveTask<int[]> {
-    private int[] pixels;
-    private int width;
-    private int height;
-    private int kernelSize;
+public class GaussianBlur {
 
-    public GaussianBlurTask(int[] pixels, int width, int height, int kernelSize) {
-        this.pixels = pixels;
-        this.width = width;
-        this.height = height;
-        this.kernelSize = kernelSize;
-    }
 
-    @Override
-    protected int[] compute() {
-        int[] blurredPixels = new int[width * height];
-
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                int[] argb = sampleAndBlur(x, y);
-                int alpha = argb[0];
-                int red = argb[1];
-                int green = argb[2];
-                int blue = argb[3];
-                int index = y * width + x;
-                blurredPixels[index] = (alpha << 24) | (red << 16) | (green << 8) | blue;
-            }
-        }
-
-        return blurredPixels;
-    }
-
-    private int[] sampleAndBlur(int x, int y) {
+    /**
+     *
+     * @param x
+     * @param y
+     * @param kernelSize
+     * @return
+     */
+    public static int[] sampleAndBlur(int x, int y, int kernelSize, ImageData image) {
         int totalAlpha = 0;
         int totalRed = 0;
         int totalGreen = 0;
@@ -45,15 +23,15 @@ public class GaussianBlurTask extends RecursiveTask<int[]> {
                 int sampleX = x + dx;
                 int sampleY = y + dy;
 
-                if (sampleX >= 0 && sampleX < width && sampleY >= 0 && sampleY < height) {
-                    int index = sampleY * width + sampleX;
-                    int[] sampleChannels = extractChannelsAsARGB(pixels[index]);
+                if (sampleX >= 0 && sampleX < image.width() && sampleY >= 0 && sampleY < image.height()) {
+                    int index = sampleY * image.width() + sampleX;
+                    int[] sampleChannels = extractChannelsAsARGB(image.pixels()[index]);
 
                     // Calculate the distance from the current sample pixel to the center pixel.
                     int distance = (int) Math.sqrt(dx * dx + dy * dy);
 
                     // You can apply the Gaussian kernel weight based on the distance.
-                    double weight = calculateGaussianWeight(distance);
+                    double weight = calculateGaussianWeight(distance, kernelSize);
 
                     totalAlpha += (int) (sampleChannels[0] * weight);
                     totalRed += (int) (sampleChannels[1] * weight);
@@ -73,7 +51,7 @@ public class GaussianBlurTask extends RecursiveTask<int[]> {
         return new int[]{alpha, red, green, blue};
     }
 
-    private int[] extractChannelsAsARGB(int pixel) {
+    public static int[] extractChannelsAsARGB(int pixel) {
         return new int[]{
                 (pixel >> 24) & 0xFF, // Alpha
                 (pixel >> 16) & 0xFF, // Red
@@ -82,7 +60,7 @@ public class GaussianBlurTask extends RecursiveTask<int[]> {
         };
     }
 
-    private double calculateGaussianWeight(int distance) {
+    public static double calculateGaussianWeight(int distance, int kernelSize) {
         // You can use the Gaussian function to calculate the weight based on the distance.
         // The standard deviation (sigma) controls the spread of the kernel.
         double sigma = kernelSize / 2.0; // You can adjust this based on your requirements.

@@ -3,7 +3,7 @@
 
 	<groupId>gbw.sdu.ra</groupId>
 	<artifactId>GuassianBlur</artifactId>
-	<version>1.0.0</version>
+	<version>1.1.4</version>
 
 	<name>GaussianBlur</name>
 
