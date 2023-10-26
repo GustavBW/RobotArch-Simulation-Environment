@@ -139,7 +139,7 @@ func startProcess(c *fiber.Ctx) error {
 	var manualRouteOverride = c.Query("processRouteOverride")
 	var manualStartCmdOverride = c.Query("processRunCmdOverride")
 
-	var now = time.Now()
+	var processTimestampStart = time.Now()
 	var pathToProcessWD = wd + "/processes/" + config.PROCESS_NAME
 	var processRunCmd = config.PROCESS_RUN_CMD
 	if manualStartCmdOverride != "" {
@@ -163,7 +163,7 @@ func startProcess(c *fiber.Ctx) error {
 		c.Response().Header.Set(config.DEFAULT_DEBUG_HEADER, "Process failed to execute: "+processRunErr.Error())
 		return c.Next()
 	}
-	var elapsed = time.Since(now)
+	var elapsed = time.Since(processTimestampStart)
 
 	var results, readErr = os.ReadFile(outputFileName)
 	if readErr != nil {
@@ -173,14 +173,13 @@ func startProcess(c *fiber.Ctx) error {
 		return c.Next()
 	}
 
-	var resultStruct = dtos.ProcessResults{
-		ComputeMS: elapsed.Milliseconds(),
-		Start:     time.Now(),
-		Result:    string(results),
-	}
 	fmt.Println("[process] Process completed successfully - from this guy's point of view at least")
+	c.Response().Header.Set("compute-ms", fmt.Sprint(elapsed.Milliseconds()))
+	c.Response().Header.Set("start", fmt.Sprint(processTimestampStart))
+	c.Response().Header.Set("Content-Type", config.PROCESS_OUTPUT_TYPE)
+
 	c.Context().SetStatusCode(200)
-	return c.JSON(&resultStruct)
+	return c.Send(results)
 }
 
 func cleanWDOfOldFiles(files []os.DirEntry) {

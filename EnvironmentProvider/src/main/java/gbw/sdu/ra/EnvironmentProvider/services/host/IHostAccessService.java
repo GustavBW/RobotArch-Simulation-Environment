@@ -12,5 +12,5 @@ public interface IHostAccessService {
     ValErr<String,Exception> getIpv4();
     ValErr<String,Exception> getApplicationWD();
     ValErr<Integer,Exception> getAvailablePort();
-    Exception verifyHost();
+    Exception verifyHostAndInit();
 }

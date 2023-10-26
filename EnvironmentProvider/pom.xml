@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>gbw.sdu.ra</groupId>
 	<artifactId>EnvironmentProvider</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 	<name>EnvironmentProvider</name>
 	<description>Environment provider service for the SDU RobotArch project. Allows for the establishment, configuration and management of a cloud-like environment.</description>
 	<properties>

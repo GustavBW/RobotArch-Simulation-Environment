@@ -20,6 +20,7 @@ var CONTAINER_EXTERNAL_PORT int32 = -1
 var LISTENING_PORT int32 = 4242
 var CONTAINER_HOST_IP string = "unknown"
 var API_VERSION string = "v-1"
+var PROCESS_OUTPUT_TYPE string = "text/plain"
 
 // Invalid until environment has been loaded
 var SPECIFICATION dtos.ServerSpecification
@@ -120,6 +121,12 @@ func LoadEnvironmentAttributes() {
 		} else {
 			LISTENING_PORT = int32(listeningPortAsInt)
 		}
+	}
+	var processOutputType = os.Getenv("RA_PROCESS_OUTPUT_MIME_TYPE")
+	if processOutputType == "" {
+		fmt.Println("RA_PROCESS_OUTPUT_MIME_TYPE environment variable not set, defaulting to text/plain")
+	} else {
+		PROCESS_OUTPUT_TYPE = processOutputType
 	}
 
 	SPECIFICATION = dtos.ServerSpecification{

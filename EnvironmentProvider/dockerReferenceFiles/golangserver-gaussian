@@ -1,0 +1,43 @@
+# Dedicated GoLang image
+FROM golang:1.21.3-alpine3.18
+
+# Establishing internal workdir
+WORKDIR /sdu-ra-cloud-server
+
+COPY ./CloudServer/go.mod ./CloudServer/go.sum ./
+
+RUN go mod tidy
+RUN go mod verify
+RUN go mod download
+
+RUN apk update
+#alpine openjdk21 package is yet in testing, thus we need to specify the repository
+RUN apk add --no-cache openjdk21 --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/
+RUN apk add --no-cache bash
+
+<slot name="dependencies"/>
+
+#How to run the process - with no flags or args
+ENV RA_PROCESS_RUN_CMD_ROOT="java -jar GaussianBlur-1.1.3.jar"
+ENV RA_PROCESS_NAME="GaussianBlur"
+ENV RA_API_VERSION=v1
+ENV RA_INTERNAL_SERVER_PORT=4242
+ENV RA_SOURCE="E:\GitHub\RobotArch-Simulation-Environment"
+ENV RA_PROCESS_OUTPUT_MIME_TYPE="image/png"
+
+#The rest is injected by the EnvironmentProvider
+<slot name="env"/>
+
+<slot name="build"/>
+# Copy the entire project to internal workdir
+COPY ./CloudServer .
+# Copy the busy wait js file to internal workdir
+COPY ./GaussianBlur/builds/GaussianBlur-1.1.3.jar ./processes/GaussianBlur/GaussianBlur-1.1.3.jar
+
+
+# Compile - builds executable
+RUN go build -o cloud-server ./src/main
+
+<slot name="exec"/>
+# Run the executable
+CMD [ "./cloud-server" ]

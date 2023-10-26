@@ -20,7 +20,7 @@ public class HostAccessService implements IHostAccessService {
     }
 
     @Override
-    public Exception verifyHost(){
+    public Exception verifyHostAndInit(){
         if(!isDockerRunning()) return new Exception("Docker is not accessible!");
         ValErr<String,Exception> getIpv4 = getIpv4();
         if(getIpv4.hasError()) return getIpv4.err();

@@ -39,6 +39,12 @@ public class DockerfileBuilder implements IDockerfileBuilder {
         if(!(tempDir.exists() || tempDir.mkdir())) return new IOException("Unable to create WD/tempDockerfiles directory");
         File refDir = new File(REFERENCE_FILE_DIR);
         if(!(refDir.exists() || refDir.mkdir())) return new IOException("Unable to create WD/dockerReferenceFiles directory");
+        File[] outputDirContent = tempDir.listFiles();
+        if(outputDirContent != null){
+            for(File f : outputDirContent){
+                f.delete();
+            }
+        }
         return null;
     }
 

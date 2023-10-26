@@ -25,9 +25,14 @@ public class ShellService implements IShellService {
     Exception init(){
         //Create log dir
         File loggingDir = new File("./shellLogs");
-        boolean createLogDir = loggingDir.mkdir();
-        if(!(loggingDir.exists() || createLogDir)){
+        if(!(loggingDir.exists() || loggingDir.mkdir())){
             return new Exception("Unable to create shell logging directory");
+        }
+        File[] loggingDirContent = loggingDir.listFiles();
+        if(loggingDirContent != null){
+            for(File f : loggingDirContent){
+                f.delete();
+            }
         }
         return null;
     }
